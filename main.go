@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"module"
 	"setup_args"
-	"list_def"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 )
