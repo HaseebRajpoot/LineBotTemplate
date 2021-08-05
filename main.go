@@ -18,8 +18,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"module"
-	"setup_args"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 )
@@ -51,7 +49,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
 			switch message := event.Message.(type) {
-			case *linebot.limit:
+			case *linebot.Limit:
 				quota, err := bot.GetMessageQuota().Do()
 				if err != nil {
 					log.Println("Quota err:", err)
@@ -60,37 +58,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 					log.Print(err)
 				}
 			}
-	for _, event := range events {
-		if event.Type == linebot.EventTypeJoin {
-			switch message := event.join.(type) {
-			case *linebot.join on:
-				quota, err := bot.GetMessageQuota().Do()
-				if err != nil {
-					log.Println("Quota err:", err)
-				}
-        if op.type == 13 or op.type == 124:
-            if mid in op.param3:
-                G = linebot.getGroup(op.param1)
-                if wait["autoJoin"] == True:
-                    linebot.acceptGroupInvitation(op.param1)
-                else:
-                    if wait["autoJoin"] == True:
-                        linebot.acceptGroupInvitation(op.param1)
-                    else:
-                        pass
-            else:
-                Inviter = op.param3.replace(" ",'')
-                InviterX = Inviter.split(",")
-                for taged in InviterX:
-                    if taged in wait['blacklist']:
-                        try:
-                            linebot.cancelGroupInvitation(op.param1,[taged])                           
-                            wait['blacklist'][op.param2] = True
-                        except:
-                            pass
-				}
-			}
-
+	
 		}
 	}
 }
