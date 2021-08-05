@@ -58,6 +58,30 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 					log.Print(err)
 				}
 			}
+			@handler.add(JoinEvent)
+def handle_join(event):
+    src = event.source
+    reply_token = event.reply_token
+    cid = line_api_proc.source_channel_id(src)
+
+    global command_executor
+
+    if not isinstance(event.source, SourceUser):
+        group_data = gb.get_group_by_id(cid)
+        if group_data is None:
+            added = gb.new_data(cid, MAIN_UID, administrator)
+            msg_track.new_data(cid)
+
+            api_reply(reply_token, 
+                      [TextMessage(text=u'群組資料註冊{}。'.format(u'成功' if added else u'失敗')),
+                       introduction_template()], 
+                       cid)
+        else:
+            api_reply(reply_token, 
+                      [TextMessage(text=u'群組資料已存在。'),
+                       TextMessage(text=command_exec.G(src, [None, None, None])),
+                       introduction_template()], 
+                       cid)
 	
 		}
 	}
