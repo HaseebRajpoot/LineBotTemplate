@@ -49,7 +49,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
 			switch message := event.Message.(type) {
-			case *linebot.TextMessage:
+			case *linebot.limit:
 				quota, err := bot.GetMessageQuota().Do()
 				if err != nil {
 					log.Println("Quota err:", err)
@@ -60,8 +60,8 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 			}
 	for _, event := range events {
 		if event.Type == linebot.EventTypeJoin {
-			switch message := event.Message.(type) {
-			case *linebot.TextMessage:
+			switch message := event.join.(type) {
+			case *linebot.join on:
 				quota, err := bot.GetMessageQuota().Do()
 				if err != nil {
 					log.Println("Quota err:", err)
