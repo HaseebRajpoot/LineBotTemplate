@@ -32,6 +32,22 @@ func main() {
 	port := os.Getenv("PORT")
 	addr := fmt.Sprintf(":%s", port)
 	http.ListenAndServe(addr, nil)
+	# Line Bot Environment initialization
+MAIN_UID_OLD = 'u6b4ec5b657f07cf28612b2be96661f68'
+MAIN_UID = 'u6b4ec5b657f07cf28612b2be96661f68'
+main_silent = False
+administrator = os.getenv('ADMIN', None)
+group_admin = os.getenv('G_ADMIN', None)
+group_mod = os.getenv('G_MOD', None)
+if administrator is None:
+    print('The SHA224 of ADMIN not defined. Program will be terminated.')
+    sys.exit(1)
+if group_admin is None:
+    print('The SHA224 of G_ADMIN not defined. Program will be terminated.')
+    sys.exit(1)
+if group_mod is None:
+    print('The SHA224 of G_MOD not defined. Program will be terminated.')
+    sys.exit(1)
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
