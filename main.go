@@ -17,7 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
+	"strings"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 )
@@ -32,22 +32,6 @@ func main() {
 	port := os.Getenv("PORT")
 	addr := fmt.Sprintf(":%s", port)
 	http.ListenAndServe(addr, nil)
-	# Line Bot Environment initialization
-MAIN_UID_OLD = 'u6b4ec5b657f07cf28612b2be96661f68'
-MAIN_UID = 'u6b4ec5b657f07cf28612b2be96661f68'
-main_silent = False
-administrator = os.getenv('ADMIN', None)
-group_admin = os.getenv('G_ADMIN', None)
-group_mod = os.getenv('G_MOD', None)
-if administrator is None:
-    print('The SHA224 of ADMIN not defined. Program will be terminated.')
-    sys.exit(1)
-if group_admin is None:
-    print('The SHA224 of G_ADMIN not defined. Program will be terminated.')
-    sys.exit(1)
-if group_mod is None:
-    print('The SHA224 of G_MOD not defined. Program will be terminated.')
-    sys.exit(1)
 }
 
 func callbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,31 +46,107 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-@handler.add(JoinEvent)
-def handle_join(event):
-    src = event.source
-    reply_token = event.reply_token
-    cid = line_api_proc.source_channel_id(src)
+	for _, event := range events {
+		switch event.Type {
+		case linebot.EventTypeUnsend:
+			log.Println("Unsend")
+			target := ""
+			if event.Source.GroupID != "" {
+				target = event.Source.GroupID
+				if profile, err := bot.GetGroupMemberProfile(event.Source.GroupID, event.Source.UserID).Do(); err == nil {
+					if _, err = bot.PushMessage(target, linebot.NewTextMessage(profile.DisplayName+" 不要害羞回收訊息唷!, 打個 show 來顯示資料吧！")).Do(); err != nil {
+						log.Print(err)
+					}
+				}
+			} else {
+				target = event.Source.RoomID
+				if profile, err := bot.GetRoomMemberProfile(event.Source.RoomID, event.Source.UserID).Do(); err == nil {
+					if _, err = bot.PushMessage(target, linebot.NewTextMessage(profile.DisplayName+" 不要害羞回收訊息唷!, 打個 show 來顯示資料吧！")).Do(); err != nil {
+						log.Print(err)
+					}
+				}
+			}
 
-    global command_executor
+		case linebot.EventTypeMessage:
+			switch message := event.Message.(type) {
+			case *linebot.TextMessage:
+				switch {
+				case event.Source.GroupID != "":
+					//In the group
+					if strings.EqualFold(message.Text, "bye") {
+						if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("Bye bye!")).Do(); err != nil {
+							log.Print(err)
+						}
+						bot.LeaveGroup(event.Source.GroupID).Do()
+					} else {
+						if strings.EqualFold(message.Text, "show") {
+							//Response with get member profile
+							if profile, err := bot.GetGroupMemberProfile(event.Source.GroupID, event.Source.UserID).Do(); err == nil {
+								sendUserProfile(*profile, event)
+							}
+						}
+					}
 
-    if not isinstance(event.source, SourceUser):
-        group_data = gb.get_group_by_id(cid)
-        if group_data is None:
-            added = gb.new_data(cid, MAIN_UID, administrator)
-            msg_track.new_data(cid)
-
-            api_reply(reply_token, 
-                      [TextMessage(text=u'群組資料註冊{}。'.format(u'成功' if added else u'失敗')),
-                       introduction_template()], 
-                       cid)
-        else:
-            api_reply(reply_token, 
-                      [TextMessage(text=u'群組資料已存在。'),
-                       TextMessage(text=command_exec.G(src, [None, None, None])),
-                       introduction_template()], 
-                       cid)
-	
+				case event.Source.RoomID != "":
+					//In the room
+					if strings.EqualFold(message.Text, "bye") {
+						if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(" Bye bye!")).Do(); err != nil {
+							log.Print(err)
+						}
+						bot.LeaveRoom(event.Source.RoomID).Do()
+					} else {
+						if strings.EqualFold(message.Text, "show") {
+							//Response with get member profile
+							if profile, err := bot.GetRoomMemberProfile(event.Source.RoomID, event.Source.UserID).Do(); err == nil {
+								sendUserProfile(*profile, event)
+							}
+						}
+					}
+				default:
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(" 你好 :"+message.Text+" OK!")).Do(); err != nil {
+						log.Print(err)
+					}
+				}
+			}
+		case linebot.EventTypeJoin:
+			// If join into a Group
+			if event.Source.GroupID != "" {
+				if groupRes, err := bot.GetGroupSummary(event.Source.GroupID).Do(); err == nil {
+					if goupMemberResult, err := bot.GetGroupMemberCount(event.Source.GroupID).Do(); err == nil {
+						retString := fmt.Sprintf("感謝讓我加入這個群組，這個群組名稱是:%s, 總共有:%d 人\n", groupRes.GroupName, goupMemberResult.Count)
+						if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(retString), linebot.NewImageMessage(groupRes.PictureURL, groupRes.PictureURL)).Do(); err != nil {
+							//Reply fail.
+							log.Print(err)
+						}
+					} else {
+						//GetGroupMemberCount fail.
+						log.Printf("GetGroupMemberCount:%x", err)
+					}
+				} else {
+					//GetGroupSummary fail/.
+					log.Printf("GetGroupSummary:%x", err)
+				}
+			} else if event.Source.RoomID != "" {
+				// If join into a Room
+				if goupMemberResult, err := bot.GetRoomMemberCount(event.Source.RoomID).Do(); err == nil {
+					retString := fmt.Sprintf("感謝讓我加入這個聊天室，這個聊天室名總共有:%d 人\n", goupMemberResult.Count)
+					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(retString)).Do(); err != nil {
+						//Reply fail.
+						log.Print(err)
+					}
+				} else {
+					//GetRoomMemberCount fail.
+					log.Printf("GetRoomMemberCount:%x", err)
+				}
+			}
 		}
+	}
+}
+
+func sendUserProfile(user linebot.UserProfileResponse, event *linebot.Event) {
+	retString := fmt.Sprintf("使用者 %s 您好， 你的 ID 是 %s, 使用語言是 %s, 狀態為: %s\n", user.DisplayName, user.UserID, user.Language, user.StatusMessage)
+	if _, err := bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(retString), linebot.NewImageMessage(user.PictureURL, user.PictureURL)).Do(); err != nil {
+		//Reply fail.
+		log.Print(err)
 	}
 }
